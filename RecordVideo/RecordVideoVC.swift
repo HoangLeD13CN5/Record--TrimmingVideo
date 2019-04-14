@@ -92,8 +92,8 @@ class RecordVideoVC: UIViewController, AVCaptureVideoDataOutputSampleBufferDeleg
         // Configure previewLayer
         previewLayer = AVCaptureVideoPreviewLayer(session: captureSession)
         previewLayer.connection!.videoOrientation = transformOrientation(orientation: UIInterfaceOrientation(rawValue: UIApplication.shared.statusBarOrientation.rawValue)!)
-        let bounds: CGRect = videoView.layer.bounds
-        previewLayer.frame = videoView.layer.bounds
+        let bounds: CGRect = UIScreen.main.bounds
+        previewLayer.frame = UIScreen.main.bounds
         previewLayer.videoGravity = AVLayerVideoGravity.resizeAspectFill
         previewLayer.position = CGPoint(x: bounds.midX, y: bounds.midY)
         videoView.layer.addSublayer(previewLayer)
@@ -389,7 +389,6 @@ extension RecordVideoVC {
             let durationTimeAsset = CMTimeGetSeconds(duration)
             listTimeRange.append((0.0, durationTimeAsset - 5.0))
             
-            
             // trimming video
             let composition = AVMutableComposition()
             let track = asset.tracks(withMediaType: .video)[0]
@@ -413,7 +412,8 @@ extension RecordVideoVC {
                                                 at: durationTime == 0 ? CMTime.zero : CMTime(seconds: durationTime, preferredTimescale: CMTimeScale(NSEC_PER_SEC)))
                 
                 durationTime = durationTime + (endTime - startTime)
-                let instruction = VideoHelper.videoCompositionInstruction(compositionTrack!, asset: asset)
+                let instruction = AVMutableVideoCompositionLayerInstruction(assetTrack: compositionTrack!)
+                instruction.setTransform(track.preferredTransform, at: timeStart)
                 mainInstruction.layerInstructions.append(instruction)
             }
             
@@ -423,7 +423,7 @@ extension RecordVideoVC {
             let mainComposition = AVMutableVideoComposition()
             mainComposition.instructions = [mainInstruction]
             mainComposition.frameDuration = CMTimeMake(value: 1, timescale: 30)
-            mainComposition.renderSize = CGSize(width: UIScreen.main.bounds.width, height: UIScreen.main.bounds.height)
+            mainComposition.renderSize = track.naturalSize
             
             // create exporter and export
             let exporter = AVAssetExportSession(asset: composition, presetName: AVAssetExportPresetHighestQuality)

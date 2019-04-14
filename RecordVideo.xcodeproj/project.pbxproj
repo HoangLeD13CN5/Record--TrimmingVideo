@@ -7,7 +7,6 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
-		3709F0F422634E7500AE9DCC /* VideoHelper.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3709F0F322634E7500AE9DCC /* VideoHelper.swift */; };
 		373B51FC2262C50000F2D59B /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = 373B51FB2262C50000F2D59B /* AppDelegate.swift */; };
 		373B51FE2262C50000F2D59B /* ViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 373B51FD2262C50000F2D59B /* ViewController.swift */; };
 		373B52012262C50000F2D59B /* Main.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 373B51FF2262C50000F2D59B /* Main.storyboard */; };
@@ -19,7 +18,6 @@
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
-		3709F0F322634E7500AE9DCC /* VideoHelper.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = VideoHelper.swift; sourceTree = "<group>"; };
 		373B51F82262C50000F2D59B /* RecordVideo.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = RecordVideo.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		373B51FB2262C50000F2D59B /* AppDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppDelegate.swift; sourceTree = "<group>"; };
 		373B51FD2262C50000F2D59B /* ViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ViewController.swift; sourceTree = "<group>"; };
@@ -62,7 +60,6 @@
 		373B51FA2262C50000F2D59B /* RecordVideo */ = {
 			isa = PBXGroup;
 			children = (
-				3709F0F322634E7500AE9DCC /* VideoHelper.swift */,
 				373B51FB2262C50000F2D59B /* AppDelegate.swift */,
 				373B51FD2262C50000F2D59B /* ViewController.swift */,
 				373B520F2262C55200F2D59B /* VerticalSlider.swift */,
@@ -151,7 +148,6 @@
 				373B51FE2262C50000F2D59B /* ViewController.swift in Sources */,
 				373B52122262C55900F2D59B /* RecordVideoVC.swift in Sources */,
 				373B51FC2262C50000F2D59B /* AppDelegate.swift in Sources */,
-				3709F0F422634E7500AE9DCC /* VideoHelper.swift in Sources */,
 				373B52102262C55200F2D59B /* VerticalSlider.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
