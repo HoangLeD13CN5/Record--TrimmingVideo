@@ -24,12 +24,22 @@ class RecordVideoVC: UIViewController, AVCaptureVideoDataOutputSampleBufferDeleg
     var time:Int = 0
     var timer: Timer?
     
+    private enum SessionSetupResult {
+        case success
+        case notAuthorized
+        case configurationFailed
+    }
+    private var setupResult: SessionSetupResult = .success
+    private var keyValueObservations = [NSKeyValueObservation]()
+    
     // MARK: - ViewController Lifecycle
     override func viewDidLoad() {
         super.viewDidLoad()
-        if setupSession() {
-            setupPreview()
-            startSession()
+        checkPermision()
+        if self.setupResult == .success {
+            if setupSession() {
+                setupPreview()
+            }
         }
     }
     
@@ -37,13 +47,80 @@ class RecordVideoVC: UIViewController, AVCaptureVideoDataOutputSampleBufferDeleg
         self.title = "Record_Video"
         let textAttributes = [NSAttributedString.Key.foregroundColor:UIColor.white]
         self.navigationController?.navigationBar.titleTextAttributes = textAttributes
+        
+        sessionQueue.async {
+            switch self.setupResult {
+            case .success:
+                self.startSession()
+            case .notAuthorized:
+                DispatchQueue.main.async {
+                    let changePrivacySetting = "AVCam doesn't have permission to use the camera, please change privacy settings"
+                    let message = NSLocalizedString(changePrivacySetting, comment: "Alert message when the user has denied access to the camera")
+                    let alertController = UIAlertController(title: "AVCam", message: message, preferredStyle: .alert)
+                    
+                    alertController.addAction(UIAlertAction(title: NSLocalizedString("OK", comment: "Alert OK button"),
+                                                            style: .cancel,
+                                                            handler: nil))
+                    
+                    alertController.addAction(UIAlertAction(title: NSLocalizedString("Settings", comment: "Alert button to open Settings"),
+                                                            style: .`default`,
+                                                            handler: { _ in
+                                                                UIApplication.shared.open(URL(string: UIApplication.openSettingsURLString)!, options: [:], completionHandler: nil)
+                    }))
+                    
+                    self.present(alertController, animated: true, completion: nil)
+                }
+            case .configurationFailed:
+                DispatchQueue.main.async {
+                    let alertMsg = "Alert message when something goes wrong during capture session configuration"
+                    let message = NSLocalizedString("Unable to capture media", comment: alertMsg)
+                    let alertController = UIAlertController(title: "AVCam", message: message, preferredStyle: .alert)
+                    
+                    alertController.addAction(UIAlertAction(title: NSLocalizedString("OK", comment: "Alert OK button"),
+                                                            style: .cancel,
+                                                            handler: nil))
+                    
+                    self.present(alertController, animated: true, completion: nil)
+                }
+            }
+        }
     }
 
     override func viewDidAppear(_ animated: Bool) {
         super.viewDidAppear(animated)
     }
     
+    override func viewWillDisappear(_ animated: Bool) {
+        sessionQueue.async {
+            if self.setupResult == .success {
+                self.captureSession.stopRunning()
+                self.removeObservers()
+            }
+        }
+        
+        super.viewWillDisappear(animated)
+    }
+    
     // MARK: - Initialization
+    
+    func checkPermision() {
+        switch AVCaptureDevice.authorizationStatus(for: .video) {
+        case .authorized:
+            break
+        case .notDetermined:
+            sessionQueue.suspend()
+            AVCaptureDevice.requestAccess(for: .video, completionHandler: { granted in
+                if !granted {
+                    self.setupResult = .notAuthorized
+                }
+                self.sessionQueue.resume()
+            })
+            
+        default:
+            setupResult = .notAuthorized
+        }
+    }
+    
     func setupSession() -> Bool{
         captureSession.sessionPreset = AVCaptureSession.Preset.high
         
@@ -61,9 +138,12 @@ class RecordVideoVC: UIViewController, AVCaptureVideoDataOutputSampleBufferDeleg
                 self.veticalSlider.slider.minimumValue = 1.0
                 self.veticalSlider.slider.value = 1.0
                 self.veticalSlider.slider.addTarget(self, action: #selector(self.valueChanged), for: .valueChanged)
+            } else {
+                setupResult = .configurationFailed
             }
         } catch {
             print("Error setting device video input: \(error)")
+            setupResult = .configurationFailed
             return false
         }
         
@@ -77,6 +157,7 @@ class RecordVideoVC: UIViewController, AVCaptureVideoDataOutputSampleBufferDeleg
             }
         } catch {
             print("Error setting device audio input: \(error)")
+            setupResult = .configurationFailed
             return false
         }
         
@@ -84,6 +165,8 @@ class RecordVideoVC: UIViewController, AVCaptureVideoDataOutputSampleBufferDeleg
         // Movie output
         if captureSession.canAddOutput(movieOutput) {
             captureSession.addOutput(movieOutput)
+        }else {
+             setupResult = .configurationFailed
         }
         return true
     }
@@ -177,7 +260,7 @@ class RecordVideoVC: UIViewController, AVCaptureVideoDataOutputSampleBufferDeleg
     @IBAction func startOrStopVideo(_ sender: Any) {
         if movieOutput.isRecording {
             recordVideoBtn.setImage(UIImage(named: "ic_play_record"), for: .normal)
-            self.lblTime.text = "00:00"
+            self.lblTime.text = "00:00:00"
             self.stopTimer()
             self.btnSwitchVideo.isHidden = false
             movieOutput.stopRecording()
@@ -362,6 +445,15 @@ class RecordVideoVC: UIViewController, AVCaptureVideoDataOutputSampleBufferDeleg
         default:
             return .portrait
         }
+    }
+    
+    private func removeObservers() {
+        NotificationCenter.default.removeObserver(self)
+        
+        for keyValueObservation in self.keyValueObservations {
+            keyValueObservation.invalidate()
+        }
+        self.keyValueObservations.removeAll()
     }
 }
 
